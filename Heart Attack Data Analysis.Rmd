@@ -1,0 +1,334 @@
+---
+title: "Heart Attack Real Data"
+output:
+  word_document: default
+  pdf_document: default
+  html_document: default
+date: "2024-12-09"
+---
+## Histograms
+
+```{r}
+library(ggplot2)
+heart_attack <- read.csv("Medicaldataset.csv")
+
+
+## Change results to binary
+heart_attack$Heart.Attack.Risk <- factor(
+  heart_attack$Result,
+  levels = c("negative", "positive"),
+  labels = c(0, 1)
+)
+
+## cap the heart rate to 200
+heart_attack$Heart.Rate.Capped <- pmin(heart_attack$Heart.rate, 200)
+
+
+## age histogram
+ggplot(heart_attack, aes(x = Age, fill = Result)) +
+  geom_histogram(binwidth = 5, position = "stack", color = "black", alpha = 0.7) +
+  labs(
+    title = "Histogram of Age by Heart Attack Risk",
+    x = "Age",
+    y = "Frequency"
+  ) +
+  scale_fill_manual(
+    values = c("blue", "red"),
+    name = "Heart Attack Risk"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "top")
+
+## heart rate histogram
+ggplot(heart_attack, aes(x = Heart.Rate.Capped, fill = Result)) +
+  geom_histogram(binwidth = 10, position = "stack", color = "black", alpha = 0.7) +
+  labs(
+    title = "Histogram of Heart Rate by Heart Attack Risk",
+    x = "Heart Rate",
+    y = "Frequency"
+  ) +
+  scale_fill_manual(
+    values = c("blue", "red"),
+    name = "Heart Attack Risk"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "top")
+
+## blood sugar histogram
+ggplot(heart_attack, aes(x = Blood.sugar, fill = Result)) +
+  geom_histogram(binwidth = 5, position = "stack", color = "black", alpha = 0.7) +
+  labs(
+    title = "Histogram of Blood Sugar by Heart Attack Risk",
+    x = "Blood Sugar",
+    y = "Frequency"
+  ) +
+  scale_fill_manual(
+    values = c("blue", "red"),
+    name = "Heart Attack Risk"
+  ) +
+  theme_minimal() +
+theme(legend.position = "top")
+```
+
+
+```{r}
+
+## CK.MB histogram
+heart_attack$CK.MB.Capped <- pmin(heart_attack$CK.MB, 100)
+
+ggplot(heart_attack, aes(x = CK.MB.Capped, fill = Result)) +
+  geom_histogram(binwidth = 10, position = "stack", color = "black", alpha = 0.7) +
+  labs(
+    title = "Histogram of CK.MB by Heart Attack Risk",
+    x = "CK.MB Level",
+    y = "Frequency"
+  ) +
+  scale_fill_manual(
+    values = c("blue", "red"),
+    name = "CK.MB"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "top")
+
+
+## Troponin histogram
+heart_attack$troponin.Capped <- pmin(heart_attack$Troponin, 20)
+ggplot(heart_attack, aes(x = troponin.Capped , fill = Result)) + 
+  geom_histogram(binwidth =1, position = "stack", color = "black", alpha = 0.7) + 
+  labs(
+    title = "Histogram of Troponin by Heart Attack Risk",
+    x = "Troponin",
+    y = "Frequency"
+  ) + 
+  scale_fill_manual(
+    values = c("blue", "red"),
+    name = "Troponin"
+  ) + 
+  theme_minimal() + 
+  theme(legend.position = "top")
+
+```
+
+## Boxplots
+
+```{r}
+
+library(ggplot2)
+
+## age boxplot
+ggplot(heart_attack, aes(x = Heart.Attack.Risk, y = Age, fill = Result)) +
+  geom_boxplot(alpha = 0.7, outlier.color = "red", outlier.shape = 16) +
+  labs(
+    title = "Box Plot of Age by Heart Attack Risk",
+    x = "Heart Attack Risk",
+    y = "Age"
+  ) +
+  scale_fill_manual(values = c("blue", "red")) +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+
+## heart rate boxplot
+ggplot(heart_attack, aes(x = Heart.Attack.Risk, y = Heart.Rate.Capped, fill = Result)) +
+  geom_boxplot(alpha = 0.7, outlier.color = "red", outlier.shape = 16) +
+  labs(
+    title = "Box Plot of Age by Heart Attack Risk",
+    x = "Heart Attack Risk",
+    y = "Heart Rate"
+  ) +
+  scale_fill_manual(values = c("blue", "red")) +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+## blood sugar boxplot
+ggplot(heart_attack, aes(x = Heart.Attack.Risk, y = Blood.sugar, fill = Heart.Attack.Risk)) +
+  geom_boxplot(alpha = 0.7, outlier.color = "red", outlier.shape = 16) +
+  labs(
+    title = "Box Plot of Heart Rate by Heart Attack Risk",
+    x = "Heart Attack Risk",
+    y = "Maximum Heart Rate"
+  ) +
+  scale_fill_manual(values = c("blue", "red")) +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+## ANOVA
+```{r}
+#anova table
+
+logistic_model <- glm(Heart.Attack.Risk ~ Age + Heart.rate + Blood.sugar+ CK.MB +Troponin, 
+                  data = heart_attack,  
+                  family = binomial)
+anova_table <- anova(logistic_model, test = "Chisq")
+anova_table
+```
+
+## logisitic regression model ~ age
+```{r}
+
+# Fit logistic regression model
+logistic_model1 <- glm(Heart.Attack.Risk ~ Age, data = heart_attack, 
+                      family = binomial)
+
+# Check summary of the model
+summary(logistic_model1)
+
+# Get the predicted probabilities
+predicted_probs1 <- logistic_model1$fitted.values
+
+# Create the scatter plot of predicted probabilities vs Age
+plot(heart_attack$Age, predicted_probs1,
+     xlab = "Age", 
+     ylab = "Predicted Probability",
+     main = "Logistic Regression: Predicted Probabilities",
+     col = "blue", 
+     pch = 16)
+```
+
+## logisitic regression model ~ heart rate
+```{r}
+# Fit logistic regression model
+logistic_model2 <- glm(Heart.Attack.Risk ~ Heart.Rate.Capped, data = heart_attack, 
+                      family = binomial)
+
+# Check summary of the model
+summary(logistic_model2)
+
+# Get the predicted probabilities
+predicted_probs2 <- logistic_model2$fitted.values
+
+# Create the scatter plot of predicted probabilities vs heart rate
+plot(heart_attack$Heart.Rate.Capped, predicted_probs2,
+     xlab = "Heart Rate", 
+     ylab = "Predicted Probability",
+     main = "Logistic Regression: Predicted Probabilities",
+     col = "blue", 
+     pch = 16)
+```
+
+## logisitic regression model ~ blood sugar
+
+```{r}
+# Fit logistic regression model
+logistic_model3 <- glm(Heart.Attack.Risk ~ Blood.sugar, data = heart_attack, 
+                      family = binomial)
+
+# Check summary of the model
+summary(logistic_model3)
+
+# Get the predicted probabilities
+predicted_probs3 <- logistic_model3$fitted.values
+
+# Create the scatter plot of predicted probabilities vs blood sugar
+plot(heart_attack$Blood.sugar, predicted_probs3,
+     xlab = "Blood Sugar", 
+     ylab = "Predicted Probability",
+     main = "Logistic Regression: Predicted Probabilities",
+     col = "blue", 
+     pch = 16)
+```
+
+## logisitic regression model ~ CK.MB
+
+```{r}
+
+heart_attack$CK.MB.Capped2 <- pmin(heart_attack$CK.MB, 40)
+# Fit logistic regression model
+logistic_model4 <- glm(Heart.Attack.Risk ~ CK.MB, data = heart_attack, 
+                      family = binomial)
+
+# Check summary of the model
+summary(logistic_model4)
+
+# Get the predicted probabilities
+predicted_probs4 <- logistic_model4$fitted.values
+
+# Create the scatter plot of predicted probabilities vs CK-MB
+plot(heart_attack$CK.MB.Capped2, predicted_probs4,
+     xlab = "CK.MB", 
+     ylab = "Predicted Probability",
+     main = "Logistic Regression: Predicted Probabilities",
+     col = "blue", 
+     pch = 16)
+
+```
+## logisitic regression model ~ Troponin
+
+```{r}
+
+heart_attack$Troponin.Capped2 <- pmin(heart_attack$Troponin,2)
+# Fit logistic regression model
+logistic_model5 <- glm(Heart.Attack.Risk ~ Troponin, data = heart_attack, 
+                      family = binomial)
+
+# Check summary of the model
+summary(logistic_model5)
+
+# Get the predicted probabilities
+predicted_probs5 <- logistic_model5$fitted.values
+
+# Create the scatter plot of predicted probabilities vs Troponin
+plot(heart_attack$Troponin.Capped2, predicted_probs5,
+     xlab = "Troponin Capped at 2", 
+     ylab = "Predicted Probability",
+     main = "Logistic Regression: Predicted Probabilities",
+     col = "blue", 
+     pch = 16)
+```
+
+```{r}
+library(boot)
+data <- heart_attack
+
+# Define the bootstrapping function
+boot_logistic_1 <- function(data, indices) {
+  # Resample the data using the provided indices
+  resampled_data <- data[indices, ]
+  
+  # Fit the logistic regression model on the resampled data
+  glm_multi_1 <- glm(Heart.Attack.Risk ~ Age + Heart.Rate.Capped + Blood.sugar + CK.MB + Troponin, data = resampled_data, 
+                     family = binomial)
+  
+  # Return the coefficients of the model
+  return(coef(glm_multi_1))
+}
+
+# Perform the bootstrap
+colnames(heart_attack)
+set.seed(123)  
+boot_results_1 <- boot(data = heart_attack, statistic = boot_logistic_1, R = 10000)
+
+# View bootstrap results
+print(boot_results_1)
+
+# Confidence intervals for coefficients
+Age_ci <- boot.ci(boot_results_1, type = "norm", index = 2)
+Heart.Rate.Capped_ci <- boot.ci(boot_results_1, type = "norm", index = 3)
+Blood.sugar_ci <- boot.ci(boot_results_1, type = "norm", index = 4)
+CK.MB_ci <- boot.ci(boot_results_1, type = "norm", index = 5)
+Troponin_ci <- boot.ci(boot_results_1, type = "norm", index = 6)
+
+print(Age_ci)
+print(Heart.Rate.Capped_ci)
+print(Blood.sugar_ci)
+print(CK.MB_ci)
+print(Troponin_ci)
+
+```
+## Odds Ratio
+
+```{r}
+glm_multi1 <- glm(Heart.Attack.Risk ~ Age + Heart.rate + Blood.sugar + CK.MB + Troponin, 
+                  data = heart_attack,  
+                  family = binomial)
+summary(glm_multi1)
+coefficients_model_1 <- coef(glm_multi1)
+odds_ratios_model_1 <- exp(coefficients_model_1)
+odds_ratios_model_1
+```
+
+
+
+
+
